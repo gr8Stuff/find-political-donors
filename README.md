@@ -1,7 +1,7 @@
 # Submission for the Insight find-political-donors Challenge 
 1. [Introduction](README.md#introduction)
 2. [Approach](README.md#challenge-summary)
-3. [Details of challenge](README.md#details-of-challenge)
+3. [Details of implementation](README.md#details-of-implementation)
 4. [Input file](README.md#input-file)
 5. [Output files](README.md#output-files)
 6. [Example](README.md#example)
@@ -81,21 +81,26 @@ The data can flow in from different sources such as a stream from a webapp or fr
    The HashMapList class is useful to hold contributions broken down by recipients and further organized by zip codes.
    The HashMapList class is also used to classify recipient-wise contributions grouped by transaction date. 
    
- ### Performance optimizations : 
-    The HashMapList class supports two modes, sorted and unsorted. 
-    
-    The sorted option is used for mapByZip class to compute the median contribution raised from the Zip Code corresponding to
-    the contribution being processed for the recipient. Under this option, the contributions are always stored in sorted fashion 
-    to enable computing the median contributions as each contribution is received. 
-    For this purpose, the contributions for a zip code are stored in a dynamic array list and it is relatively easy to 
-    add/reorder contributions. 
-    The mapByDates class does not require sorting as this is used to print a summary after processing all the records. In this case, 
-    the HashMapList uses an array of doubles to store the contributions corresponding to a given transaction date. The amount
-    corresponding to  each record is appended in the order processed. After all records are read in,the java Arrays.sort() method 
-    is called on the array before the median is computed. The array can hold upto 40 contributions for the same date, but if this 
-    size is exceeded,  the array is incremented in chunks of 40 elements. The array-based read/write is an O(1) operation and 
-    superior to ArrayList, both in terms of performance as well as size. The sort is run just once on the HashMap object 
-    corresponding to mapByDates as compared to the mapByZip for which a sort has to be run for each incoming contribution. 
+ ### Performance optimizations
+ 
+ The HashMapList class supports two modes, sorted and unsorted. 
+ The sorted option is used for mapByZip class to compute the running median contributions raised from each of the Zip Codes
+ corresponding to the contributions received for a recipient. 
+ Under this option, the contributions are always stored in sorted fashion to enable computing the median contributions as 
+ each contribution is received. 
+ For this purpose, the contributions for a zip code are stored in a dynamic array list and it is relatively easy to 
+ add/reorder contributions. 
+ The mapByDates class does not require sorting as this is used to print a summary after processing all the records.
+ In this case, the HashMapList uses an array of doubles to store the contributions corresponding to a given transaction date. 
+ The amount corresponding to  each record is appended in the order processed. 
+ After all records are read in,the java Arrays.sort() method is called on the array before the median is computed. 
+ The array can hold upto 40 contributions for the same date, but if this size is exceeded,  the array is incremented in 
+ chunks of 40 elements. 
+ 
+ #### Big O considerations
+ The array-based read/write is an O(1) operation and superior to ArrayList, both in terms of performance as well as size. 
+ The sort is run just once on the HashMap object of mapByDates as compared to the mapByZip in which the contributions have to always 
+ be stored in sorted manner so the median can be computed for incoming contributions. 
    
    
 ## Input file
