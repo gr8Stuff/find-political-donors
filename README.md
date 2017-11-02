@@ -162,11 +162,17 @@ This second output file does not depend on the order of the input file, and in f
 
 ## Instructions to run program
 
-Dependencies and run instructions (if any) in your `README`.
+Usage : FindPoliticalDonors pathtoInputFile pathtoMedianValsByZip pathToMedianValsByDate
 
 In addition to the source code, the top-most directory of your repo must include the `input` and `output` directories, and a shell script named `run.sh` that compiles and runs the program(s) that implement the required features.
+Dependencies and run instructions (if any) in your `README`.
 
-If your solution requires additional libraries, environments, or dependencies, you must specify these in your `README` documentation. See the figure below for the required structure of the top-most directory in your repo, or simply clone this repo.
+run.sh compiles and runs the java program FindPoliticalDonors with the arguments as shown below.  
+
+##Contents of run.sh
+javac -d classes ./src/*.java
+java -classpath ./classes FindPoliticalDonors ./input/itcont.txt ./output/medianvals_by_zip.txt ./output/medianvals_by_date.txt
+
 
 ## Repo directory structure
 
