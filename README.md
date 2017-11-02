@@ -1,6 +1,6 @@
-# Table of Contents
+# Submission for the Insight find-political-donors Challenge 
 1. [Introduction](README.md#introduction)
-2. [Challenge summary](README.md#challenge-summary)
+2. [Approach](README.md#challenge-summary)
 3. [Details of challenge](README.md#details-of-challenge)
 4. [Input file](README.md#input-file)
 5. [Output files](README.md#output-files)
@@ -12,41 +12,91 @@
 11. [FAQ](README.md#faq)
 
 # Introduction
-You’re a data engineer working for political consultants and you’ve been asked to help identify possible donors for a variety of upcoming election campaigns. 
+As a data engineer working for political consultants,we’ve been asked to help identify possible donors for a variety of upcoming election campaigns. 
 
-The Federal Election Commission regularly publishes campaign contributions and while you don’t want to pull specific donors from those files — because using that information for fundraising or commercial purposes is illegal — you want to identify the areas (zip codes) that may be fertile ground for soliciting future donations for similar candidates. 
+The Federal Election Commission regularly publishes campaign contributions and while we don’t want to pull specific donors from those files — because using that information for fundraising or commercial purposes is illegal — we want to identify the areas (zip codes) that may be fertile ground for soliciting future donations for similar candidates. 
 
-Because those donations may come from specific events (e.g., high-dollar fundraising dinners) but aren’t marked as such in the data, you also want to identify which time periods are particularly lucrative so that an analyst might later correlate them to specific fundraising events.
-
-# Challenge summary
-
-For this challenge, we're asking you to take an input file that lists campaign contributions by individual donors and distill it into two output files:
+Because the donations may come from specific events (e.g., high-dollar fundraising dinners) but aren’t marked as such in the data, we also want to identify the time periods that are particularly lucrative so that an analyst might later correlate them to specific fundraising events.
+For this challenge, we're have to take as input a file that lists campaign contributions by individual donors and distill it into two output files:
 
 1. `medianvals_by_zip.txt`: contains a calculated running median, total dollar amount and total number of contributions by recipient and zip code
 
 2. `medianvals_by_date.txt`: has the calculated median, total dollar amount and total number of contributions by recipient and date.
 
-As part of the team working on the project, another developer has been placed in charge of building the graphical user interface, which consists of two dashboards. The first would show the zip codes that are particularly generous to a recipient over time while the second would display the days that were lucrative for each recipient. 
 
-Your role on the project is to work on the data pipeline that will hand off the information to the front-end. As the backend data engineer, you do **not** need to display the data or work on the dashboard but you do need to provide the information.
+# Approach
 
-You can assume there is another process that takes what is written to both files and sends it to the front-end. If we were building this pipeline in real life, we’d probably have another mechanism to send the output to the GUI rather than writing to a file. However for the purposes of grading this challenge, we just want you to write the output to files.
+The data can flow in from different sources such as a stream from a webapp or from a file. Similarly, the output can flow to a queue or a process that feeds into a front-end process rather than to a file. As a result, the main data processing layer that will identify donor data has to be separated from the inflow and outflow of the data pipeline has to be source and destination agnostic. 
+ The code is divided into following layers,
+1. Init Layer : This is the main initialization code that will:
 
+   a. Validate the arguments that are passed into the program. This layer will default the non-mandatory arguments and 
+      exit with appropriate errors if there are insufficient/invalid arguments. 
+      
+   b. Process the input source(s) and output destination(s) paths and names. The input source must exist in the specified location
+      with appropriate  permissions. Output directories must be writable with permissions to create output files. 
+      
+   c. Create the appropriate readers and writers for the input and output. This can then be seemlessly adapted for 
+      different  formats/types of input sources and output destinations.
+      
+2. Data Processing Layer : This is the main processor that will receive one contribution and record the contribution based on the rules    identified. 
+3. Summary Output : This is the final layer that will perform any overall computations or summaries.
+4. Clean up : This is the code where any open files are closed so the program exits gracefully. 
 
+# Details of Implementation
 
-# Details of challenge
-
-You’re given one input file, `itcont.txt`. Each line of the input file contains information about a campaign contribution that was made on a particular date from a donor to a political campaign, committee or other similar entity. Out of the many fields listed on the pipe-delimited line, you’re primarily interested in the zip code associated with the donor, amount contributed, date of the transaction and ID of the recipient.
-
-Your code should process each line of the input file as if that record was sequentially streaming into your program. For each input file line, calculate the running median of contributions, total number of transactions and total amount of contributions streaming in so far for that recipient and zip code. The calculated fields should then be formatted into a pipe-delimited line and written to an output file named `medianvals_by_zip.txt` in the same order as the input line appeared in the input file. 
-
-Your program also should write to a second output file named `medianvals_by_date.txt`. Each line of this second output file should list every unique combination of date and recipient from the input file and then the calculated total contributions and median contribution for that combination of date and recipient. 
-
-The fields on each pipe-delimited line of `medianvals_by_date.txt` should be date, recipient, total number of transactions, total amount of contributions and median contribution. Unlike the first output file, this second output file should have lines sorted alphabetical by recipient and then chronologically by date.
-
-Also, unlike the first output file, every line in the `medianvals_by_date.txt` file should be represented by a unique combination of day and recipient -- there should be no duplicates. 
-
-
+1. Language of implementation : Chose Java to implement this as it is easy to integrate different input and output formats using 
+   an adapter-like Pattern and feed to the main data processor class.  Java can also scale for large data files/streams.
+   
+2. The FindPoliticalDonors class represents the main body of the processor. The interactions between the processor and the user input
+   and output are channeled through the static main() method, the entry to the application.
+   
+3. main() : Processes user arguments, initializes the File readers and output File writers as appropriate. 
+   Instantiate the FindPoliticalDonors class. 
+   FindPoliticalDonors provides Setter Methods that the main() uses to pass File Handles for 
+   writing  outputs. 
+   main() reads each line from the input file, mimicking streaming input and calls the addContrib() method of 
+   the FindPoliticalDonors class to processes and record each incoming contribution and running medians in the  medianvals_by_zip.txt 
+   At the end, main() calls the recordByDates() method of the FindPoliticalDonors class to create a chronological summary 
+   of contributions, broken down by recipients.  
+   
+4. The processor method addContrib() of the FindPoliticalDonors class parses the incoming record and validates the incoming 
+   contribution based on the specified business rules. This rejects records that fail criteria such as invalid OTHER_ID
+   ( other_id is non-empty) or CMTE_ID is empty( Recipient is not specified) and other such rules. 
+   
+5. To support the contribution processing, broken down by recipients( each Flier ID represents a recipient), FindPoliticalDonors 
+   uses two HashMap-based classes mapByZip and mapByDates.
+   These two classes are based on a HashMapList class. HashMapList class represents a HashMap of HashMaps and is used for the two 
+   different use cases of this project. 
+   
+   In order to support the two different cases and also to provide extensibility for future scenarios, HashMapList class is 
+   designed as a generic class with two type parameters to represents a HashMap of HashMaps.
+   
+   mapByZip: In the first scenario, given a CMTE_ID(String type), it should be possible to group and retrieve the summary 
+   of contributions by Zip Code(String Type) for each individual recipient. 
+   A HashMapList<String,String> can be used for this. 
+   mapByDates: In the second scenario, given a CMTE_ID(String type), it should be possible to get the chronological summary 
+   of contributions grouping the contributions that were collected on the same day.  
+   A HashMapList<String,Date> can be used for this. 
+   The HashMapList class is useful to hold contributions broken down by recipients and further organized by zip codes.
+   The HashMapList class is also used to classify recipient-wise contributions grouped by transaction date. 
+   
+ 6. Performance optimizations : The HashMapList class supports two modes, sorted and unsorted. 
+    
+    The sorted option is used for mapByZip class to compute the median contribution raised from the Zip Code corresponding to
+    the contribution being processed for the recipient. Under this option, the contributions are always stored in sorted fashion 
+    to enable computing the median contributions as each contribution is received. 
+    For this purpose, the contributions for a zip code are stored in a dynamic array list and it is relatively easy to 
+    add/reorder contributions. 
+    The mapByDates class does not require sorting as this is used to print a summary after processing all the records. In this case, 
+    the HashMapList uses an array of doubles to store the contributions corresponding to a given transaction date. The amount
+    corresponding to  each record is appended in the order processed. After all records are read in,the java Arrays.sort() method 
+    is called on the array before the median is computed. The array can hold upto 40 contributions for the same date, but if this 
+    size is exceeded,  the array is incremented in chunks of 40 elements. The array-based read/write is an O(1) operation and 
+    superior to ArrayList, both in terms of performance as well as size. The sort is run just once on the HashMap object 
+    corresponding to mapByDates as compared to the mapByZip for which a sort has to be run for each incoming contribution. 
+   
+   
 ## Input file
 
 The Federal Election Commission provides data files stretching back years and is [regularly updated](http://classic.fec.gov/finance/disclosure/ftpdet.shtml)
@@ -101,114 +151,12 @@ Each line of this file should contain these fields:
 
 This second output file does not depend on the order of the input file, and in fact should be sorted alphabetical by recipient and then chronologically by date.
 
-# Example
 
-Suppose your input file contained only the following few lines. Note that the fields we are interested in are in **bold** below but will not be like that in the input file. There's also an extra new line between records below, but the input file won't have that.
+## Breakdown of Tests
 
-> **C00629618**|N|TER|P|201701230300133512|15C|IND|PEREZ, JOHN A|LOS ANGELES|CA|**90017**|PRINCIPAL|DOUBLE NICKEL ADVISORS|**01032017**|**40**|**H6CA34245**|SA01251735122|1141239|||2012520171368850783
+## Instructions to run program
 
-> **C00177436**|N|M2|P|201702039042410894|15|IND|DEEHAN, WILLIAM N|ALPHARETTA|GA|**300047357**|UNUM|SVP, SALES, CL|**01312017**|**384**||PR2283873845050|1147350||P/R DEDUCTION ($192.00 BI-WEEKLY)|4020820171370029337
-
-> **C00384818**|N|M2|P|201702039042412112|15|IND|ABBOTT, JOSEPH|WOONSOCKET|RI|**028956146**|CVS HEALTH|VP, RETAIL PHARMACY OPS|**01122017**|**250**||2017020211435-887|1147467|||4020820171370030285
-
-> **C00177436**|N|M2|P|201702039042410893|15|IND|SABOURIN, JAMES|LOOKOUT MOUNTAIN|GA|**307502818**|UNUM|SVP, CORPORATE COMMUNICATIONS|**01312017**|**230**||PR1890575345050|1147350||P/R DEDUCTION ($115.00 BI-WEEKLY)|4020820171370029335
-
-> **C00177436**|N|M2|P|201702039042410895|15|IND|JEROME, CHRISTOPHER|FALMOUTH|ME|**041051896**|UNUM|EVP, GLOBAL SERVICES|**01312017**|**384**||PR2283905245050|1147350||P/R DEDUCTION ($192.00 BI-WEEKLY)|4020820171370029342
-
-> **C00384818**|N|M2|P|201702039042412112|15|IND|BAKER, SCOTT|WOONSOCKET|RI|**028956146**|CVS HEALTH|EVP, HEAD OF RETAIL OPERATIONS|**01122017**|**333**||2017020211435-910|1147467|||4020820171370030287
-
-> **C00177436**|N|M2|P|201702039042410894|15|IND|FOLEY, JOSEPH|FALMOUTH|ME|**041051935**|UNUM|SVP, CORP MKTG & PUBLIC RELAT.|**01312017**|**384**||PR2283904845050|1147350||P/R DEDUCTION ($192.00 BI-WEEKLY)|4020820171370029339
-
-If we were to pick the relevant fields from each line, here is what we would record for each line.
-
-    1.
-    CMTE_ID: C00629618
-    ZIP_CODE: 90017
-    TRANSACTION_DT: 01032017
-    TRANSACTION_AMT: 40
-    OTHER_ID: H6CA34245
-
-    2.
-    CMTE_ID: C00177436
-    ZIP_CODE: 30004
-    TRANSACTION_DT: 01312017
-    TRANSACTION_AMT: 384
-    OTHER_ID: empty
-
-    3. 
-    CMTE_ID: C00384818
-    ZIP_CODE: 02895
-    TRANSACTION_DT: 01122017
-    TRANSACTION_AMT: 250
-    OTHER_ID: empty
-
-    4.
-    CMTE_ID: C00177436
-    ZIP_CODE: 30750
-    TRANSACTION_DT: 01312017
-    TRANSACTION_AMT: 230
-    OTHER_ID: empty
-
-    5.
-    CMTE_ID: C00177436
-    ZIP_CODE: 04105
-    TRANSACTION_DT: 01312017
-    TRANSACTION_AMT: 384
-    OTHER_ID: empty
-
-    6.
-    CMTE_ID: C00384818
-    ZIP_CODE: 02895
-    TRANSACTION_DT: 01122017
-    TRANSACTION_AMT: 333
-    OTHER_ID: empty
-
-    7.
-    CMTE_ID: C00177436
-    ZIP_CODE: 04105
-    TRANSACTION_DT: 01312017
-    TRANSACTION_AMT: 384
-    OTHER_ID: empty
-
-
-
-We would ignore the first record because the `OTHER_ID` field contains data and is not empty. Moving to the next record, we would write out the first line of `medianvals_by_zip.txt` to be:
-
-`C00177436|30004|384|1|384`
-
-Note that because we have only seen one record streaming in for that recipient and zip code, the running median amount of contribution and total amount of contribution is `384`. 
-
-Looking through the other lines, note that there are only two recipients for all of the records we're interested in our input file (minus the first line that was ignored due to non-null value of `OTHER_ID`). 
-
-Also note that there are two records with the recipient `C00177436` and zip code of `04105` totaling $768 in contributions while the recipient `C00384818` and zip code `02895` has two contributions totaling $583 (250 + 333) and a median of $292 (583/2 = 291.5 or 292 when rounded up) 
-
-Processing all of the input lines, the entire contents of `medianvals_by_zip.txt` would be:
-
-    C00177436|30004|384|1|384
-    C00384818|02895|250|1|250
-    C00177436|30750|230|1|230
-    C00177436|04105|384|1|384
-    C00384818|02895|292|2|583
-    C00177436|04105|384|2|768
-
-If we drop the zip code, there are four records with the same recipient, `C00177436`, and date of `01312017`. Their total amount of contributions is $1,382. 
-
-For the recipient, `C00384818`, there are two records with the date `01122017` and total contribution of $583 and median of $292.
-
-As a result, `medianvals_by_date.txt` would contain these lines in this order:
-
-    C00177436|01312017|384|4|1382
-    C00384818|01122017|292|2|583
-
-## Writing clean, scalable and well-tested code
-
-As a data engineer, it’s important that you write clean, well-documented code that scales for large amounts of data. For this reason, it’s important to ensure that your solution works well for a large number of records, rather than just the above example.
-
-It's also important to use software engineering best practices like unit tests, especially since data is not always clean and predictable. For more details about the implementation, please refer to the FAQ below. If further clarification is necessary, email us at <cc@insightdataengineering.com>
-
-Before submitting your solution you should summarize your approach, dependencies and run instructions (if any) in your `README`.
-
-You may write your solution in any mainstream programming language such as C, C++, C#, Clojure, Erlang, Go, Haskell, Java, Python, Ruby, or Scala. Once completed, submit a link to a Github repo with your source code.
+Dependencies and run instructions (if any) in your `README`.
 
 In addition to the source code, the top-most directory of your repo must include the `input` and `output` directories, and a shell script named `run.sh` that compiles and runs the program(s) that implement the required features.
 
@@ -280,58 +228,9 @@ Your submission must pass at least the provided test in order to pass the coding
 * Put any comments in the README inside your project repo, not in the submission box
 * We are unable to accept coding challenges that are emailed to us 
 
-# FAQ
 
-Here are some common questions we've received. If you have additional questions, please email us at `cc@insightdataengineering.com` and we'll answer your questions as quickly as we can (during PST business hours), and update this FAQ.
-
-### Why are you asking us to assume the data is streaming in when creating the `medianvals_by_zip.txt` file but not when creating the `medianvals_by_date.txt` file? 
-As a data engineer, you may want to take into consideration future needs. For instance, the team working on the dashboard may want to re-use the streaming functionality used to create `medianvals_by_zip.txt` file in the future to show a running median and total dollar amount of contributions as they arrive in real-time. It might prove useful in assessing the success of a candidate's fundraising efforts at any moment in time. However, because some contributions often arrive later than others and significantly out of order, the final amounts aggregated in `medianvals_by_date.txt` also are useful to the campaign.
-
-
-### Which Github link should I submit?
+### Github link
 You should submit the URL for the top-level root of your repository. For example, this repo would be submitted by copying the URL `https://github.com/InsightDataScience/find-political-donors` into the appropriate field on the application. **Do NOT try to submit your coding challenge using a pull request**, which would make your source code publicly available.
-
-### Do I need a private Github repo?
-No, you may use a public repo, there is no need to purchase a private repo. You may also submit a link to a Bitbucket repo if you prefer.
-
-### May I use R, Matlab, or other analytics programming languages to solve the challenge?
-It's important that your implementation scales to handle large amounts of data. While many of our Fellows have experience with R and Matlab, applicants have found that these languages are unable to process data in a scalable fashion, so you must consider another language.
-
-### May I use distributed technologies like Hadoop or Spark?
-Your code will be tested on a single machine, so using these technologies will negatively impact your solution. We're not testing your knowledge on distributed computing, but rather on computer science fundamentals and software engineering best practices. 
-
-### What sort of system should I use to run my program on (Windows, Linux, Mac)?
-You may write your solution on any system, but your source code should be portable and work on all systems. Additionally, your `run.sh` must be able to run on either Unix or Linux, as that's the system that will be used for testing. Linux machines are the industry standard for most data engineering teams, so it is helpful to be familiar with this. If you're currently using Windows, we recommend installing a virtual Unix environment, such as VirtualBox or VMWare, and using that to develop your code. Otherwise, you also could use tools, such as Cygwin or Docker, or a free online IDE such as Cloud9.
-
-### How fast should my program run?
-While there are no strict performance guidelines to this coding challenge, we will consider the amount of time your program takes when grading the challenge. Therefore, you should design and develop your program in the optimal way (i.e. think about time and space complexity instead of trying to hit a specific run time value). 
-
-### Can I use pre-built packages, modules, or libraries?
-This coding challenge can be completed without any "exotic" packages. While you may use publicly available packages, modules, or libraries, you must document any dependencies in your accompanying README file. When we review your submission, we will download these libraries and attempt to run your program. If you do use a package, you should always ensure that the module you're using works efficiently for the specific use-case in the challenge, since many libraries are not designed for large amounts of data.
-
-### Will you email me if my code doesn't run?
-Unfortunately, we receive hundreds of submissions in a very short time and are unable to email individuals if their code doesn't compile or run. This is why it's so important to document any dependencies you have, as described in the previous question. We will do everything we can to properly test your code, but this requires good documentation. More so, we have provided a test suite so you can confirm that your directory structure and format are correct.
-
-### Can I use a database engine?
-This coding challenge can be completed without the use of a database. However, if you use one, it must be a publicly available one that can be easily installed with minimal configuration.
-
-### Do I need to use multi-threading?
-No, your solution doesn't necessarily need to include multi-threading - there are many solutions that don't require multiple threads/cores or any distributed systems, but instead use efficient data structures.
-
-### What should the format of the output be?
-In order to be tested correctly, you must use the format described above. You can ensure that you have the correct format by using the testing suite we've included. If you are still unable to get the correct format from the debugging messages in the suite, please email us at `cc@insightdataengineering.com`.
-
-### Should I check if the files in the input directory are text files or non-text files(binary)?
-No, for simplicity you may assume that all of the files in the input directory are text files, with the format as described above.
-
-### Can I use an IDE like Eclipse or IntelliJ to write my program?
-Yes, you can use whatever tools you want - as long as your `run.sh` script correctly runs the relevant target files and creates the `medianvals_by_zip.txt` and `medianvals_by_date.txt` files in the `output` directory.
 
 ### What should be in the input directory?
 You can put any text file you want in the directory since our testing suite will replace it. Indeed, using your own input files would be quite useful for testing. The file size limit on Github is 100 MB so you won't be able to include the larger sample input files in your `input` directory.
-
-### How will the coding challenge be evaluated?
-Generally, we will evaluate your coding challenge with a testing suite that provides a variety of inputs and checks the corresponding output. This suite will attempt to use your `run.sh` and is fairly tolerant of different runtime environments. Of course, there are many aspects (e.g. clean code, documentation) that cannot be tested by our suite, so each submission will also be reviewed manually by a data engineer.
-
-### How long will it take for me to hear back from you about my submission?
-We receive hundreds of submissions and try to evaluate them all in a timely manner. We try to get back to all applicants **within two or three weeks** of submission, but if you have a specific deadline that requires expedited review, please email us at `cc@insightdataengineering.com`.
