@@ -81,7 +81,8 @@ The data can flow in from different sources such as a stream from a webapp or fr
    The HashMapList class is useful to hold contributions broken down by recipients and further organized by zip codes.
    The HashMapList class is also used to classify recipient-wise contributions grouped by transaction date. 
    
- 6. Performance optimizations : The HashMapList class supports two modes, sorted and unsorted. 
+ ### Performance optimizations : 
+    The HashMapList class supports two modes, sorted and unsorted. 
     
     The sorted option is used for mapByZip class to compute the median contribution raised from the Zip Code corresponding to
     the contribution being processed for the recipient. Under this option, the contributions are always stored in sorted fashion 
