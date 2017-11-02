@@ -90,9 +90,13 @@ The data can flow in from different sources such as a stream from a webapp or fr
  each contribution is received. 
  For this purpose, the contributions for a zip code are stored in a dynamic array list and it is relatively easy to 
  add/reorder contributions. 
- The mapByDates class does not require sorting as this is used to print a summary after processing all the records.
+ The mapByDates class does not require that each contribution is inserted in the sorted order as this is used to print a summary 
+ after processing all the records.
  In this case, the HashMapList uses an array of doubles to store the contributions corresponding to a given transaction date. 
  The amount corresponding to  each record is appended in the order processed. 
+ As this outputs the contributions distibuted over a sorted collection of recipients, in a chronological order, the dates 
+ of contribution are used as the key of the secondary HashMap. This is stored as Date as it is far more easier to validate, compare and
+ sort  Dates as compared to Strings. The Dates are finally converted to String only for the report.
  After all records are read in,the java Arrays.sort() method is called on the array before the median is computed. 
  The array can hold upto 40 contributions for the same date, but if this size is exceeded,  the array is incremented in 
  chunks of 40 elements. 
@@ -181,7 +185,12 @@ The directory structure for your repo should look like this:
     ├── README.md 
     ├── run.sh
     ├── src
-    │   └── find_political_donors.py
+    │   └── FindPoliticalDonors.java
+    |   └── HashMapList.java
+    |___classes
+    |   └──FindPoliticalDonors.class
+    |   └──HashMapList$TableOfContribs.class
+    |   └──HashMapList.class
     ├── input
     │   └── itcont.txt
     ├── output
