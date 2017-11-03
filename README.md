@@ -163,6 +163,30 @@ This second output file does not depend on the order of the input file, and in f
 
 
 ## Breakdown of Tests
+1. test_1
+   The Sample provided.
+2. test_2
+   Some variation of test_1 adding more zip codes and transaction dates.
+3. test_3
+   This test tests the behaviour of the program for large number of contributions for the same recipient(CMTE_ID), from the same 
+   zip  code on the same date. The idea is to simulate a large number of transactions(> 50) for the same bucket(cmte_id, zipcode 
+   and cmte_id,txn_date) and check that the median values and amount are computed right. 
+4. test_4
+   This tests for error conditions.
+   - Other_ID not empty
+   - Empty transaction amount
+   - Invalid transaction amount(non numeric).
+   - Empty CMTE_ID
+   - Empty Zip Code
+   - Zip Code < 5 digits 
+   - Non-numeric zip code
+   - Empty transaction date
+   - Invalid transaction date
+
+5. test_5
+   Testing performance for very large combination of amounts and contributions.
+   - number of contributions is high(> 500) 
+   - amount of total contributions exceeds 1 Billion(> size of MAX_INTEGER)
 
 ## Instructions to run program
 
