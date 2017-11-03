@@ -31,6 +31,16 @@ class HashMapList<T,E> {
 			numOfContrib = 0;
 		}
 		
+		void incrementArray(int sz) {
+			int newsz = effContribs.length + sz;
+			Double arr[] = new Double[newsz];
+			int pos=0;
+			while(pos < effContribs.length) {
+				arr[pos] = effContribs[pos++];
+			}
+			effContribs = arr;
+		}
+		
 		// Add the new contribution in the right position - the contributions are recorded in ascending order
 		public void add(double val) {
 			numOfContrib++;
@@ -38,6 +48,11 @@ class HashMapList<T,E> {
 			if(!toSort) {
 				if(numOfContrib < effContribs.length)
 					effContribs[numOfContrib - 1] = val;
+				else {
+					//System.out.println(numOfContrib + " " + effContribs.length);
+					effContribs[numOfContrib - 1] = val;
+					incrementArray(50);
+				}
 				return;
 			}
 			int curr = contribs.size();

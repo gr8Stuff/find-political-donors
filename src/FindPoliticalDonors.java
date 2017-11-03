@@ -44,8 +44,8 @@ public class FindPoliticalDonors {
     	    // MEMO_CD(18) MEMO_TXT(19) SUB_ID(20)
     	
     		String[] contrib = line.split("\\|");
-    		System.out.println(Arrays.toString(contrib));
-    		System.out.println(contrib.length);
+    		//System.out.println(Arrays.toString(contrib));
+    		//System.out.println(contrib.length);
     		
     		//1. Rule 1: Check if other_id is empty
     		if(!contrib[15].isEmpty()) return;
@@ -53,13 +53,15 @@ public class FindPoliticalDonors {
     		//2. Rule 2: Check if CMTE_ID and TXN_AMT are valid and non-empty
     		if(contrib[0].isEmpty() || contrib[14].isEmpty()) return;
     		
+    		if (!contrib[14].matches("[0-9]+")) return;
     		
     		String cmteId = contrib[0];
     		double contribAmt = Double.parseDouble(contrib[14]);
     		
-    		//3. Rule 3: ZipCode is not empty or less than 5 digits in length
-    		String zip= contrib[10].substring(0,5);
-    		if(!zip.isEmpty() && zip.length() >= 5) {
+    		//3. Rule 3: ZipCode is not empty and not less than 5 digits in length
+    		String zip= null;
+    		if(!contrib[10].isEmpty() && (contrib[10].substring(0,5)).length() >= 5 && (contrib[10].substring(0,5)).matches("[0-9]+") ) {
+    			zip = contrib[10].substring(0,5);
     			contrib[10] = zip;
         		mapByZip.put(cmteId, zip,contribAmt);
         		
@@ -86,8 +88,8 @@ public class FindPoliticalDonors {
     		Date txnDt=null;
     		if( contrib[13].isEmpty() || (txnDt=toDate(contrib[13])) ==null ) return;
     		mapByDates.put(cmteId,txnDt,contribAmt);
-    		System.out.print(cmteId +"---*"+txnDt.toString()+"---*"+"---*"+mapByDates.getNumberOfContributionsByKey(cmteId, txnDt)+"---*"+mapByDates.getTotalContributionsByKey(cmteId, txnDt) );	
-    		System.out.print("\n");    
+    		//System.out.print(cmteId +"---*"+txnDt.toString()+"---*"+"---*"+mapByDates.getNumberOfContributionsByKey(cmteId, txnDt)+"---*"+mapByDates.getTotalContributionsByKey(cmteId, txnDt) );	
+    		//System.out.print("\n");    
     }
     
     /*
