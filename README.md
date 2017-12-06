@@ -1,4 +1,5 @@
 # Submission for the Insight find-political-donors Challenge 
+My submission to Insight Data Engineering Test December 28th,2017(12/28/2017)
 1. [Introduction](README.md#introduction)
 2. [Approach](README.md#challenge-summary)
 3. [Details of implementation](README.md#details-of-implementation)
